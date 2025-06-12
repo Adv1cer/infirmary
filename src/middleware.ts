@@ -25,5 +25,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/(Home|Dashboard|Report|Doctor|Admin|prescription)(/.*)?'],
+  matcher: ['/', '/(Home|Dashboard|Report|Doctor|Admin|prescription)(/.*)?'],
 };
