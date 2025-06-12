@@ -189,13 +189,11 @@ export default function MedicineTable() {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   STATUS
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                </th>                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <DialogMedicineAdd />
-                </th>{" "}
+                </th>
               </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            </thead>            <tbody className="bg-white divide-y divide-gray-200">
               {medicines.map((m) => (
                 <React.Fragment key={m.pill_id}>
                   <tr
@@ -234,7 +232,7 @@ export default function MedicineTable() {
                       <DialogMedicineEdit medicine={m} />
                     </td>
                   </tr>
-                  {openRow === m.pill_id && <StockTable pillId={m.pill_id} />}{" "}
+                  {openRow === m.pill_id && <StockTable pillId={m.pill_id} />}
                 </React.Fragment>
               ))}
             </tbody>

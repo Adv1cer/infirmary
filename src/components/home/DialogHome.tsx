@@ -11,66 +11,47 @@ import {
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 
-export default function DialogAction({ record, onStatusChange }: { record: any, onStatusChange?: () => void }) {
+export default function DialogHome({ record }: { record: any }) {
   const [symptoms, setSymptoms] = useState<any[]>([])
+  const [medicines, setMedicines] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
   const router = useRouter();
 
-  const fetchSymptoms = async () => {
+  const fetchDetails = async () => {
     setLoading(true)
-    const res = await fetch(
+    // Fetch symptoms
+    const resSymptoms = await fetch(
       `/api/patientform/symptoms?patientrecord_id=${record.patientrecord_id}`
     )
-    const data = await res.json()
-    setSymptoms(data)
+    const dataSymptoms = await resSymptoms.json()
+    setSymptoms(dataSymptoms)
+    // Fetch medicines from new backend
+    const resMedicines = await fetch(
+      `/api/dashboard/prescription?patientrecord_id=${record.patientrecord_id}`
+    )
+    const dataMedicines = await resMedicines.json()
+    setMedicines(dataMedicines)
     setLoading(false)
+
+    console.log("Fetched details for record:", record.patientrecord_id)
+    console.log("Symptoms:", dataSymptoms)
+    console.log("Medicines:", dataMedicines)
   }
 
-  const setStatusToZero = async () => {
-    setLoading(true);
-    const res = await fetch(`/api/dashboard/setstatus`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ patientrecord_id: record.patientrecord_id, status: 0 }),
-    });
-    setLoading(false);
-    if (res.ok) {
-      if (onStatusChange) onStatusChange();
-      setOpen(false);
-    } else {
-      // handle error if needed
-      alert("Failed to update status");
-    }
-  };
-
-  const handleDispense = () => {
-    router.push(`/prescription/${record.patientrecord_id}`);
-  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button
           className="px-4 py-2 bg-blue-600 text-white shadow-md rounded-md hover:bg-blue-500 transition-colors duration-200"
-          onClick={() => { fetchSymptoms(); setOpen(true); }}
+          onClick={() => { fetchDetails(); setOpen(true); }}
         >
-          ดำเนินการ
+          รายละเอียด
         </button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-2xl min-h-[400px] bg-gradient-to-r from-blue-50 via-white-50 to-blue-50">
-
-        {/* Dotted background pattern */}
-        <div
-          className="absolute inset-0 opacity-20 pointer-events-none"
-        // style={{
-        //   backgroundImage: 'radial-gradient(circle, #8b5cf6 1px, transparent 1px)',
-        //   backgroundSize: '20px 20px',
-        //   zIndex: 0,
-        // }}
-        />
-
         <div className="relative z-10 w-full">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold text-gray-800">ข้อมูลผู้ป่วย</DialogTitle>
@@ -143,25 +124,33 @@ export default function DialogAction({ record, onStatusChange }: { record: any, 
                 <div className="text-gray-500">No symptoms</div>
               )}
             </div>
+
+            {/* Medicines Card */}
+            <div className="bg-[#f9f9f92e] p-6 rounded-xl shadow-lg border border-gray-100">
+              <div className="flex items-center mb-4">
+                <div className="w-2 h-6 bg-gradient-to-b from-blue-500 to-cyan-500 rounded-full mr-3"></div>
+                <h3 className="font-semibold text-gray-800">รายการยาที่ได้รับ</h3>
+              </div>
+              {loading ? (
+                <div className="text-gray-500">Loading...</div>
+              ) : medicines.length > 0 ? (
+                <ul className="space-y-2">
+                  {medicines.map((m, i) => (
+                    <li key={i} className="flex items-start">
+                      <div className="w-2 h-2 bg-blue-400 rounded-full mr-3 mt-2 flex-shrink-0"></div>
+                      <span className="text-gray-700">
+                        {m.pill_name} <span className="text-gray-500">ยาประเภท: {m.pilltype_name || "-"}, โดส: {m.dose}, จำนวน: {m.quantity}{m.unit_type || "-"}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="text-gray-500">No medicines prescribed</div>
+              )}
+            </div>
           </div>
 
           <DialogFooter className="sm:justify-start mt-4 flex">
-            {record.status !== 0 && (
-              <>
-                <button
-                  className="text-white bg-green-500 px-4 py-2 rounded-md shadow-md text-gray-800 hover:bg-gray-50 transition-colors duration-200"
-                  onClick={handleDispense}
-                >
-                  จ่ายยา
-                </button>
-                <button
-                  className="text-white bg-yellow-400 px-4 py-2 rounded-md shadow-md text-gray-800 hover:bg-gray-50 transition-colors duration-200"
-                  onClick={setStatusToZero}
-                >
-                  เสร็จสิ้น
-                </button>
-              </>
-            )}
             <DialogClose asChild>
               <button className="text-white bg-red-500 px-6 py-2 rounded-md shadow-md text-gray-800 hover:bg-gray-50 transition-colors duration-200 ml-auto">
                 ปิด

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import DialogAction from '@/components/patientrecord/dialog/dialog';
+import DialogHome from './DialogHome';
 
 type PatientRecord = {
     patientrecord_id: number;
@@ -115,7 +116,7 @@ export default function HomePage() {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <DialogAction record={record} onStatusChange={() => setRefreshKey(k => k + 1)} />
+                                        <DialogHome record={record} />
                                     </td>
                                 </tr>
                             ))}

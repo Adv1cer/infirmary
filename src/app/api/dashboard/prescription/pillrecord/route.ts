@@ -27,14 +27,19 @@ export async function POST(request: Request) {
         'UPDATE pillstock SET total = total - ? WHERE pillstock_id = ?',
         [pill.quantity, pill.pillstock_id]
       );
-    }
-    await connection.execute(
+    }    await connection.execute(
       'UPDATE patientrecord SET status = 0 WHERE patientrecord_id = ?',
       [patientrecord_id]
     );
+    
     await connection.end();
-    // Return JSON success instead of redirect
-    return NextResponse.json({ success: true });
+    
+    // Return JSON success with status update notification
+    return NextResponse.json({ 
+      success: true, 
+      statusUpdated: true,
+      patientrecord_id: patientrecord_id 
+    });
   } catch (e) {
     return NextResponse.json({ error: 'Server error', details: String(e) }, { status: 500 });
   }
