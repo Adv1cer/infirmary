@@ -25,6 +25,7 @@ export default function PatientForm({
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [name, setName] = useState("");
+  const [csrfToken, setCsrfToken] = useState('');
 
   useEffect(() => {
     if (!initialSymptoms.length) {
@@ -39,6 +40,12 @@ export default function PatientForm({
         })
         .catch(() => setSymptoms([]));
     }
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/csrf')
+      .then(res => res.json())
+      .then(data => setCsrfToken(data.csrfToken));
   }, []);
 
   const toggleSymptom = (id: string) => {
@@ -79,21 +86,22 @@ export default function PatientForm({
     try {
       const res = await fetch("/api/patientform/submitform", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "csrf-token": csrfToken,
+        },
         body: JSON.stringify(formData),
-      });      if (res.ok) {
+      });
+      if (res.ok) {
         const data = await res.json();
         setShowConfirmDialog(false);
         toast.success("บันทึกข้อมูลสำเร็จแล้ว!", { duration: 4000 });
-        
-        // ใช้ navigateToTicket แทน router.push
         await navigateToTicket({
           id: data.patientRecordId.toString(),
           name: data.name,
           symptoms: data.symptoms,
           otherSymptom: data.otherSymptom
         });
-        
         return;
       } else {
         const errorData = await res.json();
