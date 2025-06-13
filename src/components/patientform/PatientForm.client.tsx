@@ -26,6 +26,8 @@ export default function PatientForm({
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [name, setName] = useState("");
   const [csrfToken, setCsrfToken] = useState('');
+  const [genderOptions, setGenderOptions] = useState<any[]>([]);
+  const [gender, setGender] = useState("");
 
   useEffect(() => {
     if (!initialSymptoms.length) {
@@ -43,9 +45,13 @@ export default function PatientForm({
   }, []);
 
   useEffect(() => {
-    fetch('/api/csrf')
-      .then(res => res.json())
-      .then(data => setCsrfToken(data.csrfToken));
+    fetch("/api/patientform/gender")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) setGenderOptions(data);
+        else setGenderOptions([]);
+      })
+      .catch(() => setGenderOptions([]));
   }, []);
 
   const toggleSymptom = (id: string) => {
@@ -59,6 +65,7 @@ export default function PatientForm({
     e.preventDefault();
     const newErrors: { [key: string]: string } = {};
     if (!name.trim()) newErrors.name = "กรุณากรอกชื่อ";
+    if (!gender) newErrors.gender = "กรุณาเลือกเพศ";
     if (!statusValue) newErrors.status = "กรุณาเลือกสถานะ";
     if (statusValue === "1" && !studentId.trim())
       newErrors.studentId = "กรุณากรอกรหัสนักศึกษา";
@@ -76,8 +83,13 @@ export default function PatientForm({
   };
 
   const handleConfirmSubmit = async () => {
+    const csrfRes = await fetch('/api/csrf');
+    const csrfData = await csrfRes.json();
+    const csrfToken = csrfData.csrfToken;
+
     const formData = {
       name,
+      gender,
       status: statusValue,
       studentId,
       selectedSymptoms: selectedSymptoms.map(Number),
@@ -91,183 +103,206 @@ export default function PatientForm({
           "csrf-token": csrfToken,
         },
         body: JSON.stringify(formData),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setShowConfirmDialog(false);
-        toast.success("บันทึกข้อมูลสำเร็จแล้ว!", { duration: 4000 });
-        await navigateToTicket({
-          id: data.patientRecordId.toString(),
-          name: data.name,
-          symptoms: data.symptoms,
-          otherSymptom: data.otherSymptom
         });
-        return;
-      } else {
-        const errorData = await res.json();
+        if (res.ok) {
+          const data = await res.json();
+          setShowConfirmDialog(false);
+          toast.success("บันทึกข้อมูลสำเร็จแล้ว!", { duration: 4000 });
+          await navigateToTicket({
+            id: data.patientRecordId.toString(),
+            name: data.name,
+            symptoms: data.symptoms,
+            otherSymptom: data.otherSymptom
+          });
+          return;
+        } else {
+          const errorData = await res.json();
+          setShowConfirmDialog(false);
+          toast.error(errorData.error || "เกิดข้อผิดพลาดในการส่งข้อมูล");
+        }
+      } catch (error) {
         setShowConfirmDialog(false);
-        toast.error(errorData.error || "เกิดข้อผิดพลาดในการส่งข้อมูล");
+        toast.error("เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์");
       }
-    } catch (error) {
-      setShowConfirmDialog(false);
-      toast.error("เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์");
-    }
-  };
-  return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-4">
-      <div className="flex flex-col items-center justify-center w-full max-w-xl p-8 bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20">
-        <h2 className="mb-8 text-3xl font-semibold text-slate-800 text-center drop-shadow-sm">
-          แบบสอบถามอาการ
-        </h2>
-        <div className="w-full">
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            {" "}
-            <div>
-              <label
-                htmlFor="name"
-                className="block mb-2 text-lg font-medium text-slate-700"
-              >
-                ชื่อ-นามสกุล
-              </label>{" "}
-              <Input
-                type="text"
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="กรุณากรอกชื่อ-นามสกุล"
-                required
-              />
-              {errors.name && (
-                <span className="text-red-500 text-sm mt-1">{errors.name}</span>
-              )}
-            </div>
-            <div>
-              <label
-                htmlFor="status"
-                className="block mb-2 text-lg font-medium text-slate-700"
-              >
-                สถานะ
-              </label>
-              <StatusPopover
-              
-                open={statusOpen}
-                setOpen={setStatusOpen}
-                statusValue={statusValue}
-                setStatusValue={setStatusValue}
-              />
-              {errors.status && (
-                <span className="text-red-500 text-sm">{errors.status}</span>
-              )}
-            </div>{" "}
-            {statusValue === "1" && (
-              <div className="transition-all duration-300 ease-in-out">
+    };
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-4">
+        <div className="flex flex-col items-center justify-center w-full max-w-xl p-8 bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20">
+          <h2 className="mb-8 text-3xl font-semibold text-slate-800 text-center drop-shadow-sm">
+            แบบสอบถามอาการ
+          </h2>
+          <div className="w-full">
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              {" "}
+              <div>
                 <label
-                  htmlFor="studentId"
+                  htmlFor="name"
                   className="block mb-2 text-lg font-medium text-slate-700"
                 >
-                  Student ID
-                </label>
+                  ชื่อ-นามสกุล
+                </label>{" "}
                 <Input
-                  placeholder="กรุณากรอกรหัสนักศึกษา"
                   type="text"
-                  id="studentId"
-                  value={studentId}
-                  onChange={(e) => setStudentId(e.target.value)}
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="กรุณากรอกชื่อ-นามสกุล"
                   required
                 />
-                {errors.studentId && (
-                  <span className="text-red-500 text-sm mt-1">
-                    {errors.studentId}
-                  </span>
+                {errors.name && (
+                  <span className="text-red-500 text-sm mt-1">{errors.name}</span>
                 )}
               </div>
-            )}{" "}
-            {statusValue === "2" && (
-              <div className="transition-all duration-300 ease-in-out">
+              <div>
                 <label
-                  htmlFor="studentId"
+                  htmlFor="gender"
                   className="block mb-2 text-lg font-medium text-slate-700"
                 >
-                  Personal ID
+                  เพศ
                 </label>
-                <Input
-                placeholder="กรุณากรอกรหัสประจำตัว"
-                  type="text"
-                  id="studentId"
-                  value={studentId}
-                  onChange={(e) => setStudentId(e.target.value)}
+                <select
+                  id="gender"
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200"
                   required
-                />
-                {errors.studentId && (
-                  <span className="text-red-500 text-sm mt-1">
-                    {errors.studentId}
-                  </span>
+                >
+                  <option value="">กรุณาเลือกเพศ</option>
+                  {genderOptions.map((g: any) => (
+                    <option key={g.gender_id} value={g.gender_id}>{g.gender_name}</option>
+                  ))}
+                </select>
+                {errors.gender && (
+                  <span className="text-red-500 text-sm mt-1">{errors.gender}</span>
                 )}
               </div>
-            )}{" "}
-            <div>
-              <label
-                htmlFor="symptom"
-                className="block mb-2 text-lg font-medium text-slate-700"
-              >
-                อาการ
-              </label>
-              <SymptomsPopover
-                open={open}
-                setOpen={setOpen}
-                symptoms={symptoms}
-                selectedSymptoms={selectedSymptoms}
-                toggleSymptom={toggleSymptom}
-              />
-              {/* Show "อื่นๆ" input if symptom ID 12 is selected */}{" "}
-              {selectedSymptoms.includes(12) && (
-                <div className="mt-4 transition-all duration-300 ease-in-out">
+              <div>
+                <label
+                  htmlFor="status"
+                  className="block mb-2 text-lg font-medium text-slate-700"
+                >
+                  สถานะ
+                </label>
+                <StatusPopover
+                
+                  open={statusOpen}
+                  setOpen={setStatusOpen}
+                  statusValue={statusValue}
+                  setStatusValue={setStatusValue}
+                />
+                {errors.status && (
+                  <span className="text-red-500 text-sm">{errors.status}</span>
+                )}
+              </div>{" "}
+              {statusValue === "1" && (
+                <div className="transition-all duration-300 ease-in-out">
                   <label
-                    htmlFor="otherSymptom"
+                    htmlFor="studentId"
                     className="block mb-2 text-lg font-medium text-slate-700"
                   >
-                    หมายเหตุ
+                    Student ID
                   </label>
                   <Input
+                    placeholder="กรุณากรอกรหัสนักศึกษา"
                     type="text"
-                    id="otherSymptom"
-                    value={otherSymptom}
-                    onChange={(e) => setOtherSymptom(e.target.value)}
+                    id="studentId"
+                    value={studentId}
+                    onChange={(e) => setStudentId(e.target.value)}
                     required
                   />
-                  {errors.otherSymptom && (
+                  {errors.studentId && (
                     <span className="text-red-500 text-sm mt-1">
-                      {errors.otherSymptom}
+                      {errors.studentId}
                     </span>
                   )}
                 </div>
-              )}
-              {errors.symptom && (
-                <span className="text-red-500 text-sm mt-1">
-                  {errors.symptom}
-                </span>
-              )}
-            </div>
-            <button
-              type="submit"
-              className="w-full py-3 mt-6 text-lg font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 transform hover:scale-[1.02] transition-all duration-200 focus:ring-4 focus:ring-blue-300 shadow-lg"
-            >
-              บันทึกข้อมูล
-            </button>
-          </form>
+              )}{" "}
+              {statusValue === "2" && (
+                <div className="transition-all duration-300 ease-in-out">
+                  <label
+                    htmlFor="studentId"
+                    className="block mb-2 text-lg font-medium text-slate-700"
+                  >
+                    Personal ID
+                  </label>
+                  <Input
+                  placeholder="กรุณากรอกรหัสประจำตัว"
+                    type="text"
+                    id="studentId"
+                    value={studentId}
+                    onChange={(e) => setStudentId(e.target.value)}
+                    required
+                  />
+                  {errors.studentId && (
+                    <span className="text-red-500 text-sm mt-1">
+                      {errors.studentId}
+                    </span>
+                  )}
+                </div>
+              )}{" "}
+              <div>
+                <label
+                  htmlFor="symptom"
+                  className="block mb-2 text-lg font-medium text-slate-700"
+                >
+                  อาการ
+                </label>
+                <SymptomsPopover
+                  open={open}
+                  setOpen={setOpen}
+                  symptoms={symptoms}
+                  selectedSymptoms={selectedSymptoms}
+                  toggleSymptom={toggleSymptom}
+                />
+                {/* Show "อื่นๆ" input if symptom ID 12 is selected */}{" "}
+                {selectedSymptoms.includes(12) && (
+                  <div className="mt-4 transition-all duration-300 ease-in-out">
+                    <label
+                      htmlFor="otherSymptom"
+                      className="block mb-2 text-lg font-medium text-slate-700"
+                    >
+                      หมายเหตุ
+                    </label>
+                    <Input
+                      type="text"
+                      id="otherSymptom"
+                      value={otherSymptom}
+                      onChange={(e) => setOtherSymptom(e.target.value)}
+                      required
+                    />
+                    {errors.otherSymptom && (
+                      <span className="text-red-500 text-sm mt-1">
+                        {errors.otherSymptom}
+                      </span>
+                    )}
+                  </div>
+                )}
+                {errors.symptom && (
+                  <span className="text-red-500 text-sm mt-1">
+                    {errors.symptom}
+                  </span>
+                )}
+              </div>
+              <button
+                type="submit"
+                className="w-full py-3 mt-6 text-lg font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 transform hover:scale-[1.02] transition-all duration-200 focus:ring-4 focus:ring-blue-300 shadow-lg"
+              >
+                บันทึกข้อมูล
+              </button>
+            </form>
+          </div>
         </div>
-      </div>
-      <DialogFormConfirm
-        open={showConfirmDialog}
-        setOpen={setShowConfirmDialog}
-        name={name}
-        statusValue={statusValue}
-        studentId={studentId}
-        symptoms={symptoms}
-        selectedSymptoms={selectedSymptoms}
-        otherSymptom={otherSymptom}
-        onConfirm={handleConfirmSubmit}
-      />
-    </main>
-  );
-}
+        <DialogFormConfirm
+          open={showConfirmDialog}
+          setOpen={setShowConfirmDialog}
+          name={name}
+          statusValue={statusValue}
+          studentId={studentId}
+          symptoms={symptoms}
+          selectedSymptoms={selectedSymptoms}
+          otherSymptom={otherSymptom}
+          onConfirm={handleConfirmSubmit}
+        />
+      </main>
+    );
+  }

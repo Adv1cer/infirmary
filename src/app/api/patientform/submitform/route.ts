@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import mysql from 'mysql2/promise';
 import Tokens from 'csrf';
+import { verifyAndInvalidateCsrfToken } from '../../csrf/route';
 
 const tokens = new Tokens();
 const secret = process.env.CSRF_SECRET || 'secret';
@@ -8,12 +9,12 @@ const secret = process.env.CSRF_SECRET || 'secret';
 export async function POST(req: NextRequest) {
     const csrfToken = req.headers.get('csrf-token');
 
-    if (!csrfToken || !tokens.verify(secret, csrfToken)) {
-        return new NextResponse('Invalid CSRF Token', { status: 403 });
+    if (!csrfToken || !verifyAndInvalidateCsrfToken(csrfToken)) {
+        return new NextResponse('Invalid or used CSRF Token', { status: 403 });
     }
 
     const body = await req.json();
-    const { name, status, studentId, selectedSymptoms, otherSymptom } = body;
+    const { name, gender, status, studentId, selectedSymptoms, otherSymptom } = body;
     // Defensive: ensure selectedSymptoms is an array of numbers
     const selectedSymptomsArray = Array.isArray(selectedSymptoms)
         ? selectedSymptoms.map((s: any) => Number(s)).filter((n: any) => !isNaN(n))
@@ -31,29 +32,29 @@ export async function POST(req: NextRequest) {
         let patientIdToUse: number;
         if (status === "1" || status === "2") {
             const [existing] = await connection.execute<mysql.RowDataPacket[]>(
-                'SELECT patient_id FROM patient WHERE personel_id = ?',
-                [studentId]
+                'SELECT patient_id FROM patient WHERE personel_id = ? AND gender_id = ?',
+                [studentId, gender]
             );
             if (Array.isArray(existing) && existing.length > 0) {
                 patientIdToUse = (existing as mysql.RowDataPacket[])[0].patient_id;
             } else {
                 const [patientResult] = await connection.execute(
-                    'INSERT INTO patient (personel_id, patient_name, patienttype_id) VALUES (?, ?, ?)',
-                    [studentId, name, status]
+                    'INSERT INTO patient (personel_id, patient_name, patienttype_id, gender_id) VALUES (?, ?, ?, ?)',
+                    [studentId, name, status, gender]
                 );
                 patientIdToUse = (patientResult as any).insertId;
             }
         } else {
             const [existing] = await connection.execute<mysql.RowDataPacket[]>(
-                'SELECT patient_id FROM patient WHERE personel_id IS NULL AND patient_name = ?',
-                [name]
+                'SELECT patient_id FROM patient WHERE personel_id IS NULL AND patient_name = ? AND gender_id = ?',
+                [name, gender]
             );
             if (Array.isArray(existing) && existing.length > 0) {
                 patientIdToUse = existing[0].patient_id;
             } else {
                 const [patientResult] = await connection.execute(
-                    'INSERT INTO patient (personel_id, patient_name, patienttype_id) VALUES (?, ?, ?)',
-                    [null, name, status]
+                    'INSERT INTO patient (personel_id, patient_name, patienttype_id, gender_id) VALUES (?, ?, ?, ?)',
+                    [null, name, status, gender]
                 );
                 patientIdToUse = (patientResult as any).insertId;
             }

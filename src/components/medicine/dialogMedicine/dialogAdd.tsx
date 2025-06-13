@@ -55,9 +55,16 @@ export default function DialogMedicineAdd({ onSave }: { onSave?: (data: any) => 
       type_id: Number(form.type_id),
       unit_id: Number(form.unit_id),
     };
+    // Fetch CSRF token before submitting
+    const csrfRes = await fetch('/api/csrf');
+    const csrfData = await csrfRes.json();
+    const csrfToken = csrfData.csrfToken;
     await fetch('/api/medicine/addMedicine', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'csrf-token': csrfToken,
+      },
       body: JSON.stringify(payload),
     });
     setOpen(false);

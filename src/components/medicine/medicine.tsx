@@ -143,7 +143,8 @@ export default function MedicineTable() {
   }, []);
 
   if (loading)
-    return <div className="p-8 text-blue-600">Loading medicines...</div>;  return (
+    return <div className="p-8 text-blue-600">Loading medicines...</div>;
+  return (
     <div className="min-h-screen bg-gray-50">
       <div className="w-full bg-white shadow-sm mb-6">
         <div className="flex items-center justify-center py-6">
@@ -165,7 +166,7 @@ export default function MedicineTable() {
           </div>
         </div>
       </div>
-      
+
       <div className="bg-white shadow-sm overflow-hidden mx-6 rounded-lg">
         {" "}
         <div className="overflow-x-auto">
@@ -176,7 +177,7 @@ export default function MedicineTable() {
                   MEDICINE ID
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  MEDICINE NAME 
+                  MEDICINE NAME
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   MEDICINE DOSE
@@ -189,11 +190,13 @@ export default function MedicineTable() {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   STATUS
-                </th>                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <DialogMedicineAdd />
                 </th>
               </tr>
-            </thead>            <tbody className="bg-white divide-y divide-gray-200">
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
               {medicines.map((m) => (
                 <React.Fragment key={m.pill_id}>
                   <tr

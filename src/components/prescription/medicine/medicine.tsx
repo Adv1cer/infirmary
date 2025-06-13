@@ -278,11 +278,19 @@ export default function MedicineTable({
                   return;
                 }
                 try {
+                  // Fetch CSRF token before submitting
+                  const csrfRes = await fetch('/api/csrf');
+                  const csrfData = await csrfRes.json();
+                  const csrfToken = csrfData.csrfToken;
+
                   const res = await fetch(
                     "/api/dashboard/prescription/pillrecord",
                     {
                       method: "POST",
-                      headers: { "Content-Type": "application/json" },
+                      headers: {
+                        "Content-Type": "application/json",
+                        "csrf-token": csrfToken,
+                      },
                       body: JSON.stringify({
                         patientrecord_id,
                         pills: selected.map((sel) => ({

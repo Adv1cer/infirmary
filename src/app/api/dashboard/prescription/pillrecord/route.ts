@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import mysql from 'mysql2/promise';
+import { verifyAndInvalidateCsrfToken } from '../../../csrf/route';
 
 const dbConfig = {
   host: process.env.MYSQL_HOST,
@@ -9,6 +10,11 @@ const dbConfig = {
 };
 
 export async function POST(request: Request) {
+  // CSRF protection
+  const csrfToken = request.headers.get('csrf-token');
+  if (!csrfToken || !verifyAndInvalidateCsrfToken(csrfToken)) {
+    return NextResponse.json({ error: 'Invalid or used CSRF Token' }, { status: 403 });
+  }
   try {
     const { patientrecord_id, pills } = await request.json();
     if (!patientrecord_id || !Array.isArray(pills) || pills.length === 0) {

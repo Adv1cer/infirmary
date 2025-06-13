@@ -54,9 +54,16 @@ export default function DialogMedicineEdit({ medicine, onSave }: {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Fetch CSRF token before submitting
+    const csrfRes = await fetch('/api/csrf');
+    const csrfData = await csrfRes.json();
+    const csrfToken = csrfData.csrfToken;
     await fetch('/api/medicine/editMedicine', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'csrf-token': csrfToken,
+      },
       body: JSON.stringify(form),
     });
     setOpen(false);

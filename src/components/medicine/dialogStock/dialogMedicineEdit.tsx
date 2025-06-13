@@ -28,9 +28,16 @@ export default function DialogStockEdit({ stock, onSave }: { stock: any, onSave?
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    // Fetch CSRF token before submitting
+    const csrfRes = await fetch('/api/csrf');
+    const csrfData = await csrfRes.json();
+    const csrfToken = csrfData.csrfToken;
     await fetch('/api/medicine/editStock', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'csrf-token': csrfToken,
+      },
       body: JSON.stringify({
         pillstock_id: form.pillstock_id,
         pill_id: form.pill_id,

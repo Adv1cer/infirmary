@@ -124,7 +124,6 @@ WHERE user.email = ?
   },
   callbacks: {
     async jwt({ token, user }) {
-      console.log("JWT callback - token before:", token, "user:", user);
       if (user) {
         const typedUser = user as AuthorizedUser;
         token.id = typedUser.id;
@@ -132,11 +131,11 @@ WHERE user.email = ?
         token.name = typedUser.name;
         token.role = typedUser.role;
       }
-      console.log("JWT callback - token after:", token);
+
       return token;
     },
     async session({ session, token }) {
-      console.log("Session callback - token:", token);
+
       if (token) {
         session.user = {
           id: token.id,
@@ -145,7 +144,6 @@ WHERE user.email = ?
           role: token.role,
         };
       }
-      console.log("Session callback - session:", session);
       return session;
     },
   },
