@@ -34,9 +34,6 @@ export default function DialogHome({ record }: { record: any }) {
     setMedicines(dataMedicines)
     setLoading(false)
 
-    console.log("Fetched details for record:", record.patientrecord_id)
-    console.log("Symptoms:", dataSymptoms)
-    console.log("Medicines:", dataMedicines)
   }
 
 
@@ -136,11 +133,16 @@ export default function DialogHome({ record }: { record: any }) {
               ) : medicines.length > 0 ? (
                 <ul className="space-y-2">
                   {medicines.map((m, i) => (
-                    <li key={i} className="flex items-start">
-                      <div className="w-2 h-2 bg-blue-400 rounded-full mr-3 mt-2 flex-shrink-0"></div>
-                      <span className="text-gray-700">
-                        {m.pill_name} <span className="text-gray-500">ยาประเภท: {m.pilltype_name || "-"}, โดส: {m.dose}, จำนวน: {m.quantity}{m.unit_type || "-"}</span>
-                      </span>
+                    <li key={i} className="flex flex-col items-start">
+                      <div className="flex items-start">
+                        <div className="w-2 h-2 bg-blue-400 rounded-full mr-3 mt-2 flex-shrink-0"></div>
+                        <span className="text-gray-700">
+                          {m.pill_name} <span className="text-gray-500">ยาประเภท: {m.pilltype_name || "-"}, โดส: {m.dose}, จำนวน: {m.quantity}{m.unit_type || "-"}</span>
+                        </span>
+                      </div>
+                      {m.name && (
+                        <span className="ml-8 text-xs text-blue-500">สั่งจ่ายโดย: {m.name}</span>
+                      )}
                     </li>
                   ))}
                 </ul>

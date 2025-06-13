@@ -27,12 +27,14 @@ export async function GET(req: NextRequest) {
         p.pill_name,
         p.dose,
         pt.type_name AS pilltype_name,
-        u.unit_type
+        u.unit_type,
+        us.name
       FROM pillrecord pr
       JOIN pillstock ps ON pr.pillstock_id = ps.pillstock_id
       JOIN pill p ON ps.pill_id = p.pill_id
       LEFT JOIN pill_type pt ON p.type_id = pt.type_id
       JOIN unit u ON p.unit_id = u.unit_id
+      LEFT JOIN user us ON pr.user_id = us.user_id
       WHERE pr.patientrecord_id = ?`,
       [patientrecord_id]
     );
