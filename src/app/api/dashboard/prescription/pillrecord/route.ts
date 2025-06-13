@@ -19,8 +19,8 @@ export async function POST(request: Request) {
     for (const pill of pills) {
       if (!pill.pillstock_id || !pill.quantity) continue;
       await connection.execute(
-        'INSERT INTO pillrecord (patientrecord_id, pillstock_id, quantity) VALUES (?, ?, ?)',
-        [patientrecord_id, pill.pillstock_id, pill.quantity]
+        'INSERT INTO pillrecord (patientrecord_id, pillstock_id, user_id, quantity) VALUES (?, ?, ?, ?)',
+        [patientrecord_id, pill.pillstock_id, pill.user_id, pill.quantity]
       );
       // Update pillstock total
       await connection.execute(

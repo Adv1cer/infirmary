@@ -10,7 +10,8 @@ import MedicineTable from '@/components/prescription/medicine/medicine';
 
 export default function PrescriptionPage() {
     const { data: session } = useSession();
-    const { id } = useParams();
+    const params = useParams();
+    const id = params ? params['id'] : undefined;
     const [activePage, setActivePage] = useState<string>('');
 
     return (

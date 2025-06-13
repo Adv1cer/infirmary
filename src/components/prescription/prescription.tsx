@@ -3,7 +3,8 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function PrescriptioComponent() {
-  const { id } = useParams();
+  const params = useParams();
+  const id = params ? params['id'] : undefined;
   const [patient, setPatient] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 function StockTable({
   pillId,
@@ -130,6 +131,7 @@ export default function MedicineTable({
   patientrecord_id: string;
 }) {
   const router = useRouter();
+  const { data: session } = useSession();
   const [medicines, setMedicines] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [openRow, setOpenRow] = useState<number | null>(null);
@@ -219,10 +221,7 @@ export default function MedicineTable({
                 <th className="px-4 py-2 text-xs font-bold text-blue-700">
                   จำนวนที่ต้องการ
                 </th>
-                <th className="px-4 py-2 text-xs font-bold text-blue-700">
-                  
-                </th>
-            
+                <th className="px-4 py-2 text-xs font-bold text-blue-700"></th>
               </tr>
             </thead>
             <tbody>
@@ -236,7 +235,7 @@ export default function MedicineTable({
                   </td>
                   <td className="px-4 py-2 text-center">
                     {sel.pillstock.total}
-                  </td>                    
+                  </td>
                   <td className="px-4 py-2 text-center">
                     <div className="flex justify-center">
                       <Input
@@ -272,6 +271,12 @@ export default function MedicineTable({
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
               onClick={async () => {
                 if (selected.length === 0) return;
+                console.log("session:", session);
+                console.log("session.user:", session?.user?.id);
+                if (!session?.user?.id) {
+                  alert("ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบใหม่");
+                  return;
+                }
                 try {
                   const res = await fetch(
                     "/api/dashboard/prescription/pillrecord",
@@ -283,6 +288,7 @@ export default function MedicineTable({
                         pills: selected.map((sel) => ({
                           pillstock_id: sel.pillstock.pillstock_id,
                           quantity: sel.amount,
+                          user_id: session.user.id,
                         })),
                       }),
                     }

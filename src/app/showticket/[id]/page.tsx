@@ -10,7 +10,8 @@ interface TicketData {
 }
 
 export default function Page() {
-  const { id } = useParams();
+  const params = useParams();
+  const id = params ? params['id'] : undefined;
   const router = useRouter();
   const [ticketData, setTicketData] = useState<TicketData>({
     name: "",
