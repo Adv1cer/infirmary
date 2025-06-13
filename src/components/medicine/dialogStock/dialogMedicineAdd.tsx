@@ -24,29 +24,70 @@ export default function DialogStockAdd({ pillId, onSave }: { pillId: number, onS
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Helper to get CSRF token
+  async function getCsrfToken(): Promise<string> {
+    const res = await fetch('/api/csrf');
+    const data = await res.json();
+    return data.csrfToken;
+  }
+
+  // Helper to POST/PUT with CSRF and auto-retry on 403
+  async function fetchWithCsrfRetry(
+    url: string,
+    options: RequestInit = {},
+    maxRetry = 1
+  ): Promise<Response> {
+    let csrfToken = await getCsrfToken();
+    let attempt = 0;
+    while (attempt <= maxRetry) {
+      const res = await fetch(url, {
+        ...options,
+        headers: {
+          ...(options.headers ? options.headers : {}),
+          'csrf-token': csrfToken,
+        },
+      });
+      if (res.status !== 403) return res;
+      // If forbidden, try to get a new token and retry
+      csrfToken = await getCsrfToken();
+      attempt++;
+    }
+    throw new Error('Forbidden: CSRF token expired or invalid');
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Fetch CSRF token before submitting
-    const csrfRes = await fetch('/api/csrf');
-    const csrfData = await csrfRes.json();
-    const csrfToken = csrfData.csrfToken;
-    await fetch('/api/medicine/addStock', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'csrf-token': csrfToken,
-      },
-      body: JSON.stringify({
+    try {
+      const payload = {
         pill_id: form.pill_id,
         expire: form.expire,
         total: Number(form.total),
-      }),
-    });
-    setLoading(false);
-    setOpen(false);
-    setForm({ pill_id: pillId, expire: '', total: '' });
-    if (onSave) onSave(form);
+      };
+      const res = await fetchWithCsrfRetry('/api/medicine/addStock', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        if (res.status === 403) {
+          alert('เซสชันหมดอายุ กรุณารีเฟรชหน้าใหม่หรือล็อกอินอีกครั้ง');
+        } else {
+          alert('เกิดข้อผิดพลาด กรุณาลองใหม่');
+        }
+        setLoading(false);
+        return;
+      }
+      setLoading(false);
+      setOpen(false);
+      setForm({ pill_id: pillId, expire: '', total: '' });
+      if (onSave) onSave(payload);
+    } catch (error) {
+      setLoading(false);
+      alert('เกิดข้อผิดพลาด กรุณาลองใหม่');
+    }
   };
 
   return (

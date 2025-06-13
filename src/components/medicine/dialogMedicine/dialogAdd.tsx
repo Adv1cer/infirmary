@@ -47,6 +47,37 @@ export default function DialogMedicineAdd({ onSave }: { onSave?: (data: any) => 
     setForm((prev) => ({ ...prev, [name]: name === 'status' ? Number(value) : value }));
   };
 
+  // Helper to fetch CSRF token
+  async function getCsrfToken(): Promise<string> {
+    const res = await fetch('/api/csrf');
+    const data = await res.json();
+    return data.csrfToken;
+  }
+
+  // Helper to POST/PUT with CSRF and auto-retry on 403
+  async function fetchWithCsrfRetry(
+    url: string,
+    options: RequestInit = {},
+    maxRetry = 1
+  ): Promise<Response> {
+    let csrfToken = await getCsrfToken();
+    let attempt = 0;
+    while (attempt <= maxRetry) {
+      const res = await fetch(url, {
+        ...options,
+        headers: {
+          ...(options.headers ? options.headers : {}),
+          'csrf-token': csrfToken,
+        },
+      });
+      if (res.status !== 403) return res;
+      // If forbidden, try to get a new token and retry
+      csrfToken = await getCsrfToken();
+      attempt++;
+    }
+    throw new Error('Forbidden: CSRF token expired or invalid');
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // Convert type_id and unit_id to number before sending
@@ -55,15 +86,11 @@ export default function DialogMedicineAdd({ onSave }: { onSave?: (data: any) => 
       type_id: Number(form.type_id),
       unit_id: Number(form.unit_id),
     };
-    // Fetch CSRF token before submitting
-    const csrfRes = await fetch('/api/csrf');
-    const csrfData = await csrfRes.json();
-    const csrfToken = csrfData.csrfToken;
-    await fetch('/api/medicine/addMedicine', {
+    // Use fetchWithCsrfRetry for CSRF-protected request
+    await fetchWithCsrfRetry('/api/medicine/addMedicine', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'csrf-token': csrfToken,
       },
       body: JSON.stringify(payload),
     });

@@ -125,6 +125,37 @@ function StockTable({
   );
 }
 
+// Helper to get CSRF token
+async function getCsrfToken(): Promise<string> {
+  const res = await fetch('/api/csrf');
+  const data = await res.json();
+  return data.csrfToken;
+}
+
+// Helper to POST/PUT with CSRF and auto-retry on 403
+async function fetchWithCsrfRetry(
+  url: string,
+  options: RequestInit = {},
+  maxRetry = 1
+): Promise<Response> {
+  let csrfToken = await getCsrfToken();
+  let attempt = 0;
+  while (attempt <= maxRetry) {
+    const res = await fetch(url, {
+      ...options,
+      headers: {
+        ...(options.headers ? options.headers : {}),
+        'csrf-token': csrfToken,
+      },
+    });
+    if (res.status !== 403) return res;
+    // If forbidden, try to get a new token and retry
+    csrfToken = await getCsrfToken();
+    attempt++;
+  }
+  throw new Error('Forbidden: CSRF token expired or invalid');
+}
+
 export default function MedicineTable({
   patientrecord_id,
 }: {
@@ -278,18 +309,12 @@ export default function MedicineTable({
                   return;
                 }
                 try {
-                  // Fetch CSRF token before submitting
-                  const csrfRes = await fetch('/api/csrf');
-                  const csrfData = await csrfRes.json();
-                  const csrfToken = csrfData.csrfToken;
-
-                  const res = await fetch(
+                  const res = await fetchWithCsrfRetry(
                     "/api/dashboard/prescription/pillrecord",
                     {
                       method: "POST",
                       headers: {
                         "Content-Type": "application/json",
-                        "csrf-token": csrfToken,
                       },
                       body: JSON.stringify({
                         patientrecord_id,
@@ -305,24 +330,18 @@ export default function MedicineTable({
                     const result = await res.json();
                     alert("บันทึกสำเร็จ");
                     setSelected([]);
-
-                    // Trigger status update for the ticket
                     if (result.statusUpdated && result.patientrecord_id) {
-                      // Set localStorage trigger for ticket status update
                       localStorage.setItem(
                         `status_update_${result.patientrecord_id}`,
                         "true"
                       );
-
-                      // Also dispatch custom event
                       window.dispatchEvent(
                         new CustomEvent("statusUpdate", {
                           detail: { patientrecord_id: result.patientrecord_id },
                         })
                       );
                     }
-
-                    router.push("/Home"); // Use Next.js router for navigation
+                    router.push("/Home");
                   } else {
                     const error = await res.json();
                     alert(

@@ -82,11 +82,38 @@ export default function PatientForm({
     setShowConfirmDialog(true);
   };
 
-  const handleConfirmSubmit = async () => {
-    const csrfRes = await fetch('/api/csrf');
-    const csrfData = await csrfRes.json();
-    const csrfToken = csrfData.csrfToken;
+  // Helper to get CSRF token
+  async function getCsrfToken(): Promise<string> {
+    const res = await fetch('/api/csrf');
+    const data = await res.json();
+    return data.csrfToken;
+  }
 
+  // Helper to POST/PUT with CSRF and auto-retry on 403
+  async function fetchWithCsrfRetry(
+    url: string,
+    options: RequestInit = {},
+    maxRetry = 1
+  ): Promise<Response> {
+    let csrfToken = await getCsrfToken();
+    let attempt = 0;
+    while (attempt <= maxRetry) {
+      const res = await fetch(url, {
+        ...options,
+        headers: {
+          ...(options.headers ? options.headers : {}),
+          'csrf-token': csrfToken,
+        },
+      });
+      if (res.status !== 403) return res;
+      // If forbidden, try to get a new token and retry
+      csrfToken = await getCsrfToken();
+      attempt++;
+    }
+    throw new Error('Forbidden: CSRF token expired or invalid');
+  }
+
+  const handleConfirmSubmit = async () => {
     const formData = {
       name,
       gender,
@@ -96,35 +123,34 @@ export default function PatientForm({
       otherSymptom: selectedSymptoms.includes(12) ? otherSymptom : "",
     };
     try {
-      const res = await fetch("/api/patientform/submitform", {
+      const res = await fetchWithCsrfRetry("/api/patientform/submitform", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "csrf-token": csrfToken,
         },
         body: JSON.stringify(formData),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setShowConfirmDialog(false);
-          toast.success("บันทึกข้อมูลสำเร็จแล้ว!", { duration: 4000 });
-          await navigateToTicket({
-            id: data.patientRecordId.toString(),
-            name: data.name,
-            symptoms: data.symptoms,
-            otherSymptom: data.otherSymptom
-          });
-          return;
-        } else {
-          const errorData = await res.json();
-          setShowConfirmDialog(false);
-          toast.error(errorData.error || "เกิดข้อผิดพลาดในการส่งข้อมูล");
-        }
-      } catch (error) {
+      });
+      if (res.ok) {
+        const data = await res.json();
         setShowConfirmDialog(false);
-        toast.error("เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์");
+        toast.success("บันทึกข้อมูลสำเร็จแล้ว!", { duration: 4000 });
+        await navigateToTicket({
+          id: data.patientRecordId.toString(),
+          name: data.name,
+          symptoms: data.symptoms,
+          otherSymptom: data.otherSymptom
+        });
+        return;
+      } else {
+        const errorData = await res.json();
+        setShowConfirmDialog(false);
+        toast.error(errorData.error || "เกิดข้อผิดพลาดในการส่งข้อมูล");
       }
-    };
+    } catch (error) {
+      setShowConfirmDialog(false);
+      toast.error("เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์");
+    }
+  };
     return (
       <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-4">
         <div className="flex flex-col items-center justify-center w-full max-w-xl p-8 bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20">
