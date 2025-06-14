@@ -16,6 +16,7 @@ export async function GET() {
   return NextResponse.json({ csrfToken: token });
 }
 
+// Helper for other routes to check and invalidate a token
 export function verifyAndInvalidateCsrfToken(token: string): boolean {
   const createdAt = usedTokens.get(token);
   if (
