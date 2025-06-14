@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import mysql from 'mysql2/promise';
 import Tokens from 'csrf';
-import { verifyAndInvalidateCsrfToken } from '../../csrf/route';
+import { verifyAndInvalidateCsrfToken } from '../../../../lib/route';
 
 const tokens = new Tokens();
 const secret = process.env.CSRF_SECRET || 'secret';
