@@ -621,7 +621,11 @@ export default function AdminPage() {
   // Copy link to clipboard
   const copyToClipboard = async (text: string) => {
     try {
-      if (navigator.clipboard && window.isSecureContext) {
+      if (
+        typeof navigator !== "undefined" &&
+        navigator.clipboard &&
+        window.isSecureContext
+      ) {
         await navigator.clipboard.writeText(text);
       } else {
         // Fallback for insecure context or unsupported browsers
