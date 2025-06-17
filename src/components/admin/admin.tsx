@@ -621,12 +621,25 @@ export default function AdminPage() {
   // Copy link to clipboard
   const copyToClipboard = async (text: string) => {
     try {
-      await navigator.clipboard.writeText(text);
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        // Fallback for insecure context or unsupported browsers
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.style.position = "fixed"; // Prevent scrolling to bottom
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
       toast.success('Link copied to clipboard!');
     } catch (err) {
       console.error('Failed to copy: ', err);
       toast.error('Failed to copy link');
-    }  };
+    }
+  };
 
   // Show loading while session is being loaded
   if (status === 'loading') {
