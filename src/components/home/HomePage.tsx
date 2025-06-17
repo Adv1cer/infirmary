@@ -77,21 +77,21 @@ export default function HomePage() {
                     </>
                 )}            
                 </div>           
-            <div className="mx-4 bg-gradient-to-br from-white to-slate-50 rounded-2xl shadow-lg border border-slate-200/50 p-6">
+            <div className="mx-4 bg-white rounded-2xl shadow-lg border border-slate-200/50 p-6">
                 <h2 className="mb-6 text-2xl font-bold text-center flex items-center justify-center gap-3">
                     <div className="p-2 bg-gradient-to-br from-slate-100 to-gray-100 rounded-xl shadow-sm">
                         <svg className="w-6 h-6 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                     </div>                  
-                    <span className="bg-gradient-to-r from-slate-700 to-slate-600 bg-clip-text text-transparent">
+                    <span className="bg-gradient-to-r from-slate-700 to-slate-700 bg-clip-text text-transparent">
                         ผู้ป่วยวันนี้
                     </span>
                 </h2>
                 <div className="overflow-x-auto rounded-2xl shadow-sm border border-slate-200/30">
                     <table className="w-full bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden">
                         <thead>
-                            <tr className="bg-gradient-to-r from-slate-100 via-blue-50 to-rose-50 border-b border-slate-200/50">
+                            <tr className="bg-gradient-to-r from-slate-100 via-blue-50 to-slate-50 border-b border-slate-200/50">
                                 <th className="px-6 py-4 text-left text-slate-700 font-semibold text-sm uppercase tracking-wide">ID</th>
                                 <th className="px-6 py-4 text-left text-slate-700 font-semibold text-sm uppercase tracking-wide">Patient ID</th>
                                 <th className="px-6 py-4 text-left text-slate-700 font-semibold text-sm uppercase tracking-wide">Patient Name</th>

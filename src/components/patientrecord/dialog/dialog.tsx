@@ -59,7 +59,7 @@ export default function DialogAction({ record, onStatusChange }: { record: any, 
         </button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-2xl min-h-[400px] bg-gradient-to-r from-blue-50 via-white-50 to-blue-50">
+      <DialogContent className="sm:max-w-2xl min-h-[400px] bg-slate-50 to-blue-50">
 
         {/* Dotted background pattern */}
         <div

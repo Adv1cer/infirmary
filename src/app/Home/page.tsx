@@ -9,12 +9,15 @@ import { AnimatePresence } from "motion/react";
 import * as motion from "motion/react-client";
 import PatientTable from '@/components/patient/patient';
 import MedicineTable from '@/components/medicine/medicine';
+import StatisticPage from '@/components/statistic/statistic';
+import AdminPage from '@/components/admin/admin';
+import Account from '@/components/account/account';
 
 const tabs = [
     { label: 'หน้าหลัก', value: 'home', icon: '🏠' },
     { label: 'รับเรื่องผู้ป่วย', value: 'patientrecord', icon: '📝' },
     { label: 'รายชื่อผู้ป่วย', value: 'patient', icon: '📋' },
-    { label: 'รายงานการจ่ายยา', value: 'medicine', icon: '💊' },
+    { label: 'สต็อกยา', value: 'medicine', icon: '💊' },
     { label: 'สถิติ', value: 'statistic', icon: '📊' },
 ];
 
@@ -23,13 +26,17 @@ export default function Home() {
     const router = useRouter();
     const [activePage, setActivePage] = useState('home');
 
-    return (
-        <main className="flex min-h-screen bg-gradient-to-br from-blue-25 via-white to-pink-25">
-            <Sidebar role={session?.user?.role ?? ''} setActivePage={setActivePage} />
-            <div className="flex-1 flex flex-col">
-                <nav className="flex justify-center mt-8 mb-4">
+    // Create filtered tabs based on user role
+    const filteredTabs = [...tabs];
+    if (session?.user?.role === 'admin') {
+        filteredTabs.push({ label: 'admin', value: 'admin', icon: '👤' });
+    }
+
+    return (        <main className="flex min-h-screen bg-gradient-to-br from-blue-25 via-white to-pink-25">
+            <Sidebar role={session?.user?.role ?? ''} session={session} setActivePage={setActivePage} />
+            <div className="flex-1 flex flex-col">                <nav className="flex justify-center mt-8 mb-4">
                     <ul className="flex gap-4 bg-white/80 rounded-xl shadow-md px-2 py-1">
-                        {tabs.map((tab) => (
+                        {filteredTabs.map((tab) => (
                             <motion.li
                                 key={tab.value}
                                 initial={false}
@@ -59,11 +66,13 @@ export default function Home() {
                             exit={{ y: -20, opacity: 0 }}
                             transition={{ duration: 0.25 }}
                             className="flex-1 flex flex-col"
-                        >
-                            {activePage === 'home' && <HomePage />}
+                        >                            {activePage === 'home' && <HomePage />}
                             {activePage === 'patientrecord' && <Patientrecord />}
                             {activePage === 'patient' && <PatientTable />}
                             {activePage === 'medicine' && <MedicineTable />}
+                            {activePage === 'statistic' && <StatisticPage />}
+                            {activePage === 'account' && <Account />}
+                            {activePage === 'admin' && <AdminPage />}
 
                         </motion.div>
                     </AnimatePresence>

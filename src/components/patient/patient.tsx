@@ -11,6 +11,9 @@ interface Patient {
 export default function PatientTable() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     const fetchPatients = async () => {
@@ -40,6 +43,13 @@ export default function PatientTable() {
     fetchPatients();
   }, []);
 
+  // Pagination logic
+  const totalPages = Math.ceil(patients.length / itemsPerPage);
+  const paginatedPatients = patients.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   if (loading) return <div className="p-8 text-gray-600">Loading patients...</div>;
 
   return (
@@ -66,7 +76,7 @@ export default function PatientTable() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {patients.map((p) => (
+                {paginatedPatients.map((p) => (
                   <tr key={p.patient_id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.patient_id}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.personal_id || '-'}</td>
@@ -76,6 +86,28 @@ export default function PatientTable() {
                 ))}
               </tbody>
             </table>
+            {/* Pagination */}
+            <div className="bg-white px-6 py-3 flex items-center justify-center border-t border-gray-200">
+              <div className="flex items-center gap-4">
+                <button
+                  className="px-3 py-1 text-sm text-gray-500 hover:text-gray-700 disabled:opacity-50"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </button>
+                <span className="text-sm text-gray-700">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  className="px-3 py-1 text-sm text-gray-500 hover:text-gray-700 disabled:opacity-50"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

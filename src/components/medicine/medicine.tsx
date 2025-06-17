@@ -25,97 +25,83 @@ interface Medicine {
 interface StockRow {
   pillstock_id: number;
   pill_id: number;
+  pill_name?: string;
   expire: string;
   total: number;
 }
 
-function StockTable({ pillId }: { pillId: number }) {
+function StockTable({ pillId, pillName }: { pillId: number; pillName: string }) {
   const [stock, setStock] = useState<StockRow[]>([]);
   const [loading, setLoading] = useState(false);
-  const [showTable, setShowTable] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     if (!pillId) return;
     setLoading(true);
     fetch(`/api/prescription/medicine/stock?pill_id=${pillId}`)
       .then((res) => res.json())
-      .then((data) => setStock(data))
+      .then((data) => {
+        // เพิ่มชื่อยาให้กับแต่ละ stock item
+        const stockWithNames = data.map((item: StockRow) => ({
+          ...item,
+          pill_name: pillName
+        }));
+        setStock(stockWithNames);
+      })
       .finally(() => setLoading(false));
-  }, [pillId]);
-
-  if (!showTable) {
-    return (
-      <tr>
-        <td colSpan={7} className="p-0 text-center">
-          <button
-            className="mt-2 px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-all"
-            onClick={() => setShowTable(true)}
-            type="button"
-          >
-            แสดงสต็อก
-          </button>
-        </td>
-      </tr>
-    );
-  }
-
-  if (loading)
-    return (
-      <tr>
-        <td colSpan={7} className="text-center py-4">
-          Loading stock...
-        </td>
-      </tr>
-    );
-  if (!stock.length)
-    return (
-      <tr>
-        <td colSpan={7} className="text-center py-4 text-gray-500 text-sm">
-          ไม่พบข้อมูลสต็อก
-        </td>
-      </tr>
-    );
-
-  return (
+  }, [pillId, pillName, refreshKey]);  return (
     <tr>
       <td colSpan={7} className="p-0">
-        <div className="overflow-x-auto bg-blue-50/50 border-t">
-          <table className="bg-white min-w-full text-sm">
+        <div className="overflow-x-auto bg-blue-50/30 border-t border-blue-200">
+          <table className="bg-blue-50/20 min-w-full text-sm">
             <thead>
-              <tr className="bg-gray-50">
-                <th className="px-4 py-2 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock ID</th>
-                <th className="px-4 py-2 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pill ID</th>
-                <th className="px-4 py-2 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pill Name</th>
-                <th className="px-4 py-2 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <tr className="bg-blue-100/60 border-b border-blue-200">
+                <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Stock ID</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Pill ID</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Pill Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">
                   Expire (Date/Time)
                 </th>
-                <th className="px-4 py-2 border-b text-blue-700">Total</th>
-                <th className="px-4 py-2 border-b text-blue-700">
-                  <DialogStockAdd pillId={pillId} />
-                </th>
-              </tr>
+                <th className="px-6 py-3 text-center text-xs font-medium text-blue-700 uppercase tracking-wider">Total</th>
+                <th className="px-6 py-3 text-center">
+                  <DialogStockAdd pillId={pillId} onSave={() => setRefreshKey((k) => k + 1)} />
+                </th>              </tr>
             </thead>
-            <tbody className="bg-white">
-              {stock.map((s) => (
-                <tr key={s.pillstock_id}>
-                  <td className="px-4 py-2 border-b text-center">
-                    {s.pillstock_id}
-                  </td>
-                  <td className="px-4 py-2 border-b text-center">
-                    {s.pill_id}
-                  </td>
-                  <td className="px-4 py-2 border-b text-center">
-                    {/* pill_name will be fetched below */} -{" "}
-                  </td>
-                  <td className="px-4 py-2 border-b text-center">
-                    {new Date(s.expire).toLocaleString("th-TH")}
-                  </td>
-                  <td className="px-4 py-2 border-b text-center">{s.total}</td>
-                  <td className="px-4 py-2 border-b text-center">
-                    <DialogStockEdit stock={s} />
+            <tbody className="bg-blue-50/20 divide-y divide-blue-200">
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-4 text-blue-600">
+                    Loading stock...
                   </td>
                 </tr>
-              ))}
+              ) : stock.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-4 text-blue-500 text-sm">
+                    ไม่พบข้อมูลสต็อก
+                  </td>
+                </tr>
+              ) : (
+                stock.map((s) => (
+                  <tr key={s.pillstock_id} className="hover:bg-blue-100/40 transition-colors">
+                    <td className="px-6 py-4 text-sm text-blue-900">
+                      {s.pillstock_id}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-blue-900">
+                      {s.pill_id}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-blue-900">
+                      {s.pill_name || '-'}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-blue-900">
+                      {new Date(s.expire).toLocaleString("th-TH")}
+                    </td>
+                    <td className="px-6 py-4 text-center text-sm text-blue-900">{s.total}</td>
+                    <td className="px-6 py-4 text-center">
+                      <DialogStockEdit stock={s} onSave={() => setRefreshKey((k) => k + 1)} />
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -128,6 +114,9 @@ export default function MedicineTable() {
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [loading, setLoading] = useState(true);
   const [openRow, setOpenRow] = useState<number | null>(null);
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     const fetchMedicines = async () => {
@@ -141,6 +130,13 @@ export default function MedicineTable() {
     };
     fetchMedicines();
   }, []);
+
+  // Pagination logic
+  const totalPages = Math.ceil(medicines.length / itemsPerPage);
+  const paginatedMedicines = medicines.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   if (loading)
     return <div className="p-8 text-blue-600">Loading medicines...</div>;
@@ -165,59 +161,62 @@ export default function MedicineTable() {
             <h2 className="text-lg font-medium">รายการยา</h2>
           </div>
         </div>
-      </div>
-
-      <div className="bg-white shadow-sm overflow-hidden mx-6 rounded-lg">
-        {" "}
+      </div>      <div className="bg-white shadow-sm overflow-hidden mx-6 rounded-lg">
         <div className="overflow-x-auto">
           <table className="min-w-full bg-white">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-slate-100 border-b border-slate-200">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
                   MEDICINE ID
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
                   MEDICINE NAME
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
                   MEDICINE DOSE
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
                   MEDICINE TYPE
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
                   UNIT TYPE
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
                   STATUS
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <DialogMedicineAdd />
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
+                  <DialogMedicineAdd onSave={() => {
+                    // Refresh medicines after add
+                    setLoading(true);
+                    fetch("/api/prescription/medicine")
+                      .then(res => res.json())
+                      .then(data => setMedicines(data))
+                      .finally(() => setLoading(false));                  }} />
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {medicines.map((m) => (
+            <tbody className="bg-white divide-y divide-slate-200">
+              {paginatedMedicines.map((m) => (
                 <React.Fragment key={m.pill_id}>
                   <tr
-                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="hover:bg-slate-50 transition-colors cursor-pointer"
                     onClick={() =>
                       setOpenRow(openRow === m.pill_id ? null : m.pill_id)
                     }
                   >
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
                       {m.pill_id}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
                       {m.pill_name}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
                       {m.dose}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
                       {m.type_name}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
                       {m.unit_type}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -232,23 +231,37 @@ export default function MedicineTable() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <DialogMedicineEdit medicine={m} />
-                    </td>
+                      <DialogMedicineEdit medicine={m} onSave={() => {
+                        setLoading(true);
+                        fetch("/api/prescription/medicine")
+                          .then(res => res.json())
+                          .then(data => setMedicines(data))
+                          .finally(() => setLoading(false));
+                      }} />                    </td>
                   </tr>
-                  {openRow === m.pill_id && <StockTable pillId={m.pill_id} />}
+                  {openRow === m.pill_id && <StockTable pillId={m.pill_id} pillName={m.pill_name} />}
                 </React.Fragment>
               ))}
             </tbody>
           </table>
-
           {/* Pagination */}
-          <div className="bg-white px-6 py-3 flex items-center justify-center border-t border-gray-200">
+          <div className="bg-slate-50 px-6 py-3 flex items-center justify-center border-t border-slate-200">
             <div className="flex items-center gap-4">
-              <button className="px-3 py-1 text-sm text-gray-500 hover:text-gray-700">
+              <button
+                className="px-3 py-1 text-sm text-slate-500 hover:text-slate-700 disabled:opacity-50"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
                 Previous
               </button>
-              <span className="text-sm text-gray-700">Page 1 of 2</span>
-              <button className="px-3 py-1 text-sm text-gray-500 hover:text-gray-700">
+              <span className="text-sm text-slate-700">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                className="px-3 py-1 text-sm text-slate-500 hover:text-slate-700 disabled:opacity-50"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
                 Next
               </button>
             </div>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import mysql from 'mysql2/promise';
-import { verifyAndInvalidateCsrfToken } from '../../../../lib/csrf';
+import { verifyAndInvalidateCsrfToken } from '@/app/api/csrf/route'; 
 
 const dbConfig = {
   host: process.env.MYSQL_HOST,
